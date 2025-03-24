@@ -1,77 +1,50 @@
 import allure
 from pages.base_page import BasePage
-from locators.main_page_locators import MainPageLocators
+from locators.main_page_locators import MainPageLocators as Loc
+from data import URLs
+
 
 class MainPage(BasePage):
-    @allure.step('Дождаться загрузки страницы')
-    def main_page_loading_wait(self):
-        self.wait_for_element_hide(MainPageLocators.OVERLAY, 30)
 
-    @allure.step('Клик по кнопке "Войти в аккаунт"')
-    def click_on_login_button(self):
-        self.main_page_loading_wait()
-        self.click_on_element(MainPageLocators.BUTTON_LOGIN)
+    @allure.step('Открытие основной страницы.')
+    def open_main_page(self):
+        self.open_page(URLs.BASE_URL)
 
-    @allure.step('Клик по ссылке "Личный кабинет"')
-    def click_on_account_link(self):
-        self.main_page_loading_wait()
-        self.click_on_element(MainPageLocators.PROFILE_LINK, 22)
+    @allure.step('Клик по записи ингредиента.')
+    def click_to_ingredient(self):
+        self.click_to_element_by_script(Loc.SEARCH_BUNS_INGREDIENT_ITEM)
 
-    @allure.step('Клик по ссылке "Конструктор"')
-    def click_on_constructor_link(self):
-        self.click_on_element(MainPageLocators.CONSTRUCTOR_LINK)
-        self.main_page_loading_wait()
+    @allure.step('Проверка открытия окна с деталями по ингредиенту.')
+    def ingredient_detail_is_active(self):
+        return self.element_is_available(Loc.SEARCH_INGREDIENT_DETAIL)
 
-    @allure.step('Клик по ссылке "Лента заказов"')
-    def click_on_list_order_link(self):
-        self.main_page_loading_wait()
-        self.click_on_element(MainPageLocators.LIST_ORDER_LINK)
-        self.main_page_loading_wait()
+    @allure.step('Нажатие на "крестик" окна с деталями по ингредиенту.')
+    def close_details_window(self):
+        self.click_to_element_by_script(Loc.SEARCH_CLOSE_INGREDIENT_DETAIL_BTN)
 
-    @allure.step('Клик по ингредиенту')
-    def click_on_ingredient(self):
-        self.click_on_element(MainPageLocators.INGREDIENT_BUN_R2_D3)
-        self.main_page_loading_wait()
+    @allure.step('Ожидание доступности элемента конструктора, перетаскивание элемента ингридиента к заказу.')
+    def add_ingredient_to_order(self):
+        self.find_element_with_wait(Loc.SEARCH_DRAG_BUN_UP)
+        self.drag_and_drop_element(Loc.SEARCH_BUNS_INGREDIENT_ITEM, Loc.SEARCH_DRAG_BUN_UP)
 
-    @allure.step('Проверка видимости элемента "Детали ингридиента"')
-    def find_element_with_ingredients_details_on_window(self):
-        element = self.wait_for_element(MainPageLocators.INGREDIENT_DETAILS_TEXT, 20)
-        return element.text
-
-    @allure.step('Клик по крестику всплывающего окна')
-    def click_on_cross_button_modal_window(self):
-        self.click_on_element(MainPageLocators.CROSS_BUTTON, 20)
-
-    @allure.step('Проверка НЕвидимости элемента "Детали ингридиента"')
-    def check_invisible_ingredient_detail_on_window(self):
-        return self.wait_for_element_hide(MainPageLocators.INGREDIENT_DETAILS_TEXT)
-
-    @allure.step('Перетащить ингредиент булка в корзину')
-    def drag_and_drop_ingredient_bun_R2_D3(self):
-        self.drag_and_drop_element(MainPageLocators.INGREDIENT_BUN_R2_D3, MainPageLocators.BASKET)
-
-    @allure.step('Перетащить ингредиент соус в корзину')
-    def drag_and_drop_ingredient_sauce_spicy(self):
-        self.drag_and_drop_element(MainPageLocators.INGREDIENT_SAUCE_SPICY, MainPageLocators.BASKET)
-
-    @allure.step('Дождаться элемента количество ингредиента')
-    def counter_value_bun_R2_D3(self):
-        return self.wait_for_element(MainPageLocators.COUNTER_BUN_R2_D3)
-
-    @allure.step('Клик на кнопку Оформить заказ')
-    def click_make_order_button(self):
-        self.click_on_element(MainPageLocators.ORDER_BUTTON)
-
-    @allure.step('Проверка видимости элемента "Идентификатор заказа"')
-    def find_element_id_order(self):
-        return self.wait_for_element(MainPageLocators.ID_ORDER)
-
-    @allure.step('Создаем заказ и передаем его номер')
-    # Не оформлено в фикстуру, т.к. нет функционала для удаления ненужных заказов
+    @allure.step('Нажатие на кнопку "Оформить заказ"')
     def create_order(self):
-        self.main_page_loading_wait()
-        self.drag_and_drop_ingredient_bun_R2_D3()
-        self.drag_and_drop_ingredient_sauce_spicy()
-        self.click_make_order_button()
-        self.main_page_loading_wait()
-        self.find_element_id_order()
+        self.click_to_element(Loc.SEARCH_CREATE_ORDER_BTN)
+
+    @allure.step('Добавление ингридиента в заказ, создание заказа.')
+    def add_ingredient_and_create_order(self):
+        self.add_ingredient_to_order()
+        self.create_order()
+
+    @allure.step('Считывание значения каунтера ингредиента.')
+    def get_counter(self):
+        return self.get_text_from_element(Loc.SEARCH_BUNS_COUNTER_INGREDIENT_ITEM)
+
+    @allure.step('Признак создания заказа.')
+    def order_is_created(self):
+        return self.element_is_available(Loc.SEARCH_ORDER_HAS_STARTED)
+
+    @allure.step('Считывание номера заказа из окна деталей по заказу.')
+    def get_order_number_from_details_window(self):
+        self.wait_before_text_change(Loc.SEARCH_ORDER_NUMBER_FROM_DETAILS_WINDOW, '9999')
+        return '0' + self.get_text_from_element(Loc.SEARCH_ORDER_NUMBER_FROM_DETAILS_WINDOW)

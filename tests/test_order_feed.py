@@ -1,66 +1,76 @@
-import pytest
 import allure
-from pages.main_page import MainPage
-from pages.order_feed_page import OrderFeedPage
-from pages.account_page import AccountPage
 
 
 class TestOrderFeed:
-    @allure.title('Проверка: при клике на заказ, открывается всплывающее окно с деталями')
-    def test_click_order_open_details(self, driver):
-        main_page = MainPage(driver)
-        order_feed_page = OrderFeedPage(driver)
-        main_page.main_page_loading_wait()
-        main_page.click_on_list_order_link()
-        order_feed_page.click_on_order()
-        main_page.main_page_loading_wait()
-        assert order_feed_page.find_element_with_orders_details_on_window()
 
-    @allure.title('Проверка: заказы пользователя из раздела «История заказов» отображаются на странице «Лента заказов»')
-    def test_order_history_in_feed(self, prepared_order):
-        main_page, order_feed_page, account_page = prepared_order
-        get_number_of_new_order = order_feed_page.wait_to_get_actual_order_number()
-        main_page.main_page_loading_wait()
-        order_feed_page.click_on_close_button_information_of_order()
-        main_page.main_page_loading_wait()
-        main_page.click_on_account_link()
-        main_page.main_page_loading_wait()
-        account_page.click_button_oder_histore()
-        main_page.main_page_loading_wait()
-        order_feed_page.check_order_in_history(get_number_of_new_order)
-        main_page.click_on_list_order_link()
-        assert order_feed_page.check_order_number_in_order_list(get_number_of_new_order)
+    @allure.title('Проверка, что если кликнуть на заказ, то откроется всплывающее окно с деталями.')
+    @allure.description('Предварительное создание и логирование пользователя; переход на ленту заказов; '
+                        'выбор и нажатие на заказ; проверка открытия окна с деталями; '
+                        'удаление пользователя.')
+    def test_click_order_feed_detail_is_open(self, login_user, cross_over, order_feed):
+        cross_over.go_to_feed_page()
+        order_feed.click_to_oder_feed_ingredient_item()
+        assert order_feed.detail_modal_window_is_opened() is True
 
-    @allure.title('При создании нового заказа счётчики "Выполнено за всё время" и "Выполнено за сегодня" увеличиваются')
-    @pytest.mark.parametrize("counter_type, getter_method",
-    [
-        ("total", "get_total_orders_count"),
-        ("today", "get_today_orders_count"),
-    ])
-    def test_order_increases_total_and_daily_counts(self, driver, create_user_and_get_token, login_user, counter_type, getter_method):
-        main_page = MainPage(driver)
-        order_feed_page = OrderFeedPage(driver)
-        main_page.click_on_list_order_link()
-        count_before = getattr(order_feed_page, getter_method)()
-        main_page.click_on_constructor_link()
-        main_page.create_order()
-        main_page.main_page_loading_wait()
-        order_feed_page.click_on_close_button_information_of_order()
-        main_page.main_page_loading_wait()
-        main_page.click_on_list_order_link()
-        main_page.main_page_loading_wait()
-        count_after = getattr(order_feed_page, getter_method)()
-        assert count_after > count_before
+    @allure.title('Проверка, что заказы пользователя из «Истории заказов» отображаются на странице «Лента заказов».')
+    @allure.description('Предварительное создание и логирование пользователя; создание нескольких заказов; '
+                        'считывание списка номеров заказов из истории; считывание списка всех номеров из ленты;'
+                        'проверка, что первый список является подсписком второго; удаление пользователя.')
+    def test_display_orders_history_in_order_feed(self, user_methods, login_user, order_methods,
+                                                  cross_over, order_feed, profile):
+        order_count = 2
+        order_methods.user_access_token = user_methods.get_user_access_token()
+        order_methods.create_n_orders(order_count)
 
-    @allure.title('После создании нового заказа его номер появляется в резделе "В работе"')
-    def test_order_number_appears_in_progress(self, prepared_order):
-        main_page, order_feed_page, _ = prepared_order
-        new_order_number = order_feed_page.wait_to_get_actual_order_number()
-        main_page.main_page_loading_wait()
-        order_feed_page.click_on_close_button_information_of_order()
-        main_page.main_page_loading_wait()
-        main_page.click_on_list_order_link()
-        main_page.main_page_loading_wait()
-        updated_orders_in_progress = order_feed_page.get_order_numbers_in_progress()
-        # Приводим оба значения к строковому виду без начального нуля
-        assert str(int(new_order_number)) in [str(int(order)) for order in updated_orders_in_progress]
+        cross_over.go_to_profile_page()
+        order_history_list = profile.get_order_history_number_list(order_count)
+
+        cross_over.go_to_feed_page()
+        order_feed_list = order_feed.get_order_feed_number_list()
+        assert set(order_history_list).issubset(order_feed_list)
+
+    @allure.title('Проверка, что при создании нового заказа счётчик "Выполнено за всё время" увеличивается.')
+    @allure.description('Предварительное создание и логирование пользователя; считывание значения счётчика '
+                        '"Выполнено за всё время" перед заказом; создание заказа; считывание значения счётчика '
+                        'после выполнения заказа; проверка, что второе значение больше первого; удаление пользователя.')
+    def test_create_order_counting_all_is_up(self, login_user, cross_over, order_feed, main):
+        cross_over.go_to_feed_page()
+        all_count_order_before = order_feed.get_all_count_order()
+        cross_over.go_to_constructor_page()
+
+        main.add_ingredient_to_order()
+        main.create_order()
+        main.close_details_window()
+
+        cross_over.go_to_feed_page()
+        all_count_order_after = order_feed.get_all_count_order()
+        assert all_count_order_after > all_count_order_before
+
+    @allure.title('Проверка, что при создании нового заказа счётчик "Выполнено за сегодня" увеличивается.')
+    @allure.description('Предварительное создание и логирование пользователя; считывание значения счётчика '
+                        '"Выполнено за сегодня" перед заказом; создание заказа; считывание значения счётчика '
+                        'после выполнения заказа; проверка, что второе значение больше первого; удаление пользователя.')
+    def test_create_order_counting_today_is_up(self, login_user, cross_over, order_feed, main):
+        cross_over.go_to_feed_page()
+        today_count_order_before = order_feed.get_today_count_order()
+
+        cross_over.go_to_constructor_page()
+        main.add_ingredient_and_create_order()
+        main.close_details_window()
+
+        cross_over.go_to_feed_page()
+        today_count_order_after = order_feed.get_today_count_order()
+        assert today_count_order_after > today_count_order_before
+
+    @allure.title('Проверка, что после оформления заказа его номер появляется в разделе "В работе".')
+    @allure.description('Предварительное создание и логирование пользователя; создание заказа; копирование номера '
+                        'заказа из появившегося окна информации по заказу; переход в ленту заказов и проверка, '
+                        'что данный номер содержится в разделе "В работе"; удаление пользователя.')
+    def test_after_crate_detail_number_show_in_order_feed_work_status(self, login_user, cross_over, order_feed, main):
+        main.add_ingredient_and_create_order()
+        order_number_from_details = main.get_order_number_from_details_window()
+        main.close_details_window()
+
+        cross_over.go_to_feed_page()
+        order_number_from_order_feed = order_feed.get_order_numbers_in_work()
+        assert order_number_from_details in order_number_from_order_feed

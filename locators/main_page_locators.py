@@ -1,22 +1,14 @@
-from selenium.webdriver.common.by import  By
+from selenium.webdriver.common.by import By
+
 
 class MainPageLocators:
-    OVERLAY = (By.XPATH, ".//div[contains(@class, 'Modal_modal_overlay__x2ZCr')]/parent::div")
-    BUTTON_LOGIN = (By.XPATH, '//button[text()="Войти в аккаунт"]')
-
-    PROFILE_LINK = (By.XPATH, "//a[@href='/account']")
-
-    CONSTRUCTOR_LINK = (By.XPATH, "//p[text()='Конструктор']")
-    LIST_ORDER_LINK = (By.XPATH, "//a[@href='/feed']")
-
-    INGREDIENT_BUN_R2_D3 = (By.XPATH, ".//a[@href='/ingredient/61c0c5a71d1f82001bdaaa6d']")
-    INGREDIENT_DETAILS_TEXT = (By.XPATH, "//h2[text()='Детали ингредиента']")
-    CROSS_BUTTON = (By.XPATH, "//button[@class='Modal_modal__close_modified__3V5XS Modal_modal__close__TnseK']")
-
-    BASKET = (By.XPATH, ".//ul[contains(@class, 'BurgerConstructor_basket')]")
-    INGREDIENT_SAUCE_SPICY = (By.XPATH, ".//a[@href='/ingredient/61c0c5a71d1f82001bdaaa72']/img")
-    COUNTER_BUN_R2_D3 = (By.XPATH, "//a[@href='/ingredient/61c0c5a71d1f82001bdaaa6d']//p[@class='counter_counter__num__3nue1']")
-
-
-    ORDER_BUTTON = (By.XPATH, "//button[text()='Оформить заказ']")
-    ID_ORDER = (By.XPATH, "//p[text()='идентификатор заказа']")
+    SEARCH_BUNS_INGREDIENT_ITEM = By.XPATH, "//img[@alt = 'Краторная булка N-200i']"
+    SEARCH_BUNS_COUNTER_INGREDIENT_ITEM = By.XPATH, "//img[@alt = 'Краторная булка N-200i']/parent::*//p[" \
+                                                    "@class='counter_counter__num__3nue1'] "
+    SEARCH_SAUCES_ITEM = By.XPATH, "//img[@alt =  'Соус Spicy-X']"
+    SEARCH_INGREDIENT_DETAIL = By.XPATH, "//section[@class = 'Modal_modal_opened__3ISw4 Modal_modal__P3_V5']"
+    SEARCH_DRAG_BUN_UP = By.XPATH, "//span[text() = 'Перетяните булочку сюда (верх)']"
+    SEARCH_CREATE_ORDER_BTN = By.XPATH, "//button[text() = 'Оформить заказ']"
+    SEARCH_ORDER_HAS_STARTED = By.XPATH, "//h2[contains(@class, 'Modal_modal__title_shadow__3ikwq')]"
+    SEARCH_CLOSE_INGREDIENT_DETAIL_BTN = By.XPATH, "//button[contains(@class,'close')]"
+    SEARCH_ORDER_NUMBER_FROM_DETAILS_WINDOW = By.XPATH, "//h2[contains(@class, 'Modal_modal__title_shadow__3ikwq')]"

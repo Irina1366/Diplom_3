@@ -1,14 +1,15 @@
-from selenium.webdriver.common.by import  By
+from selenium.webdriver.common.by import By
+
 
 class OrderFeedPageLocators:
-    TOP_ORDER = (By.XPATH, ".//ul[contains(@class, 'OrderFeed_list')]/li[1]/a")
-    INFORMATION_OF_ORDER = (By.XPATH, "//p[@class='text text_type_digits-default mb-10 mt-5']")
-
-    ORDER_NUMBER_IN_MODAL_WINDOW = (By.XPATH, "//h2[@class='Modal_modal__title_shadow__3ikwq Modal_modal__title__2L34m text text_type_digits-large mb-8']")
-    BUTTON_CLOSE_ORDER = (By.XPATH, "//button[@class='Modal_modal__close_modified__3V5XS Modal_modal__close__TnseK']")
-
-    TOTAL_ORDERS_COUNTER = (By.XPATH, "//p[@class='OrderFeed_number__2MbrQ text text_type_digits-large']")
-    TODAY_ORDERS_COUNTER = (By.XPATH, "//p[@class='OrderFeed_number__2MbrQ text text_type_digits-large']")
-
-    IN_PROGRESS_ORDERS_SECTION = (By.XPATH, "//p[text()='В работе:']/following-sibling::ul")
-    ORDER_NUMBER_IN_PROGRESS = (By.XPATH, "//li[contains(@class, 'text_type_digits-default')]")
+    SEARCH_ORDER_ITEMS = By.XPATH, "//li [@class='OrderHistory_listItem__2x95r mb-6']"
+    SEARCH_ORDER_ITEM = By.XPATH, "//li [@class='OrderHistory_listItem__2x95r mb-6'][1]"
+    SEARCH_ORDER_COMPOSITION_LBL = By.XPATH, "//section[contains(@class ,'Modal_modal_opened')]"
+    SEARCH_CLOSE_MODAL_WINDOW_BTN = By.XPATH, "//section[contains(@class ,'Modal_modal_opened')]//button"
+    SEARCH_ORDER_ITEM_NUMBER = By.XPATH, "//div[@class='OrderHistory_textBox__3lgbs mb-6']//p[@class='text " \
+                                         "text_type_digits-default'] "
+    SEARCH_ALL_TIME_COUNT_ORDER = By.XPATH, "//p [text() = 'Выполнено за все время:']/parent::*/p [contains(@class, " \
+                                            "'OrderFeed_number__2MbrQ')] "
+    SEARCH_TODAY_COUNT_ORDER = By.XPATH, "//p [text() = 'Выполнено за сегодня:']/parent::*/p [contains(@class, " \
+                                         "'OrderFeed_number__2MbrQ')] "
+    SEARCH_ORDER_NUMBERS_IN_WORK = By.XPATH, "//ul[contains(@class,'OrderFeed_orderListReady')]/li"

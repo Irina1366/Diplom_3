@@ -1,36 +1,30 @@
-import pytest
 import allure
-from pages.main_page import MainPage
-from pages.account_page import AccountPage
-from curl import *
+from data import URLs
 
 
 class TestPersonalAccount:
-    @allure.title('Проверка перехода по клику на «Личный кабинет»')
-    def test_click_personal_account_button(self, driver):
-        main_page = MainPage(driver)
-        account_page = AccountPage(driver)
-        main_page.main_page_loading_wait()
-        main_page.click_on_account_link()
-        current_url = account_page.get_current_url()
-        assert current_url == Url.LOGIN_URL
 
-    @allure.title('Проверка перехода в раздел «История заказов»')
-    def test_click_button_order_history(self, driver, create_user_and_get_token, login_user):
-        main_page = MainPage(driver)
-        account_page = AccountPage(driver)
-        account_page.click_button_personal_account()
-        main_page.main_page_loading_wait()
-        account_page.click_button_oder_histore()
-        current_url = account_page.get_current_url()
-        assert current_url == Url.ORDER_HISTORY_URL
+    @allure.title('Проверка перехода по клику на «Личный кабинет».')
+    @allure.description('Предварительное создание и логирование пользователя; нажатина на кнопку «Личный кабинет»; '
+                        'проверка корректности перехода на страницу профиля; удаление пользователя.')
+    def test_cross_from_main_to_personal_account(self, cross_over, login_user):
+        cross_over.go_to_profile_page()
+        assert cross_over.get_current_url() == URLs.ACCOUNT_PROFILE_PAGE_URL
 
-    @allure.title('Проверка выхода из аккаунта')
-    def test_account_logout(self, driver, create_user_and_get_token, login_user):
-        main_page = MainPage(driver)
-        account_page = AccountPage(driver)
-        account_page.click_button_personal_account()
-        main_page.main_page_loading_wait()
-        account_page.click_logout_button()
-        main_page.main_page_loading_wait()
-        assert account_page.wait_login_button_clickable()
+    @allure.title('Проверка перехода в раздел «История заказов».')
+    @allure.description('Предварительное создание и логирование пользователя; переход на страницу профиля; '
+                        'нажатие на кнопку "История заказов", поверка корректности открытия раздела истории; '
+                        'удаление пользователя.')
+    def test_cross_from_personal_account_to_order_history(self, cross_over, login_user, profile):
+        cross_over.go_to_profile_page()
+        profile.click_to_order_history_btn()
+        assert profile.get_current_url() == URLs.ORDER_HISTORY_PAGE_URL
+
+    @allure.title('Проверка возможности выхода из аккаунта.')
+    @allure.description('Предварительное создание и логирование пользователя; переход на страницу профиля; '
+                        'нажатие на кнопку "Выход", проверка перехода на страницу логирования; '
+                        'удаление пользователя.')
+    def test_logout_from_personal_account(self, cross_over, login_user, profile):
+        cross_over.go_to_profile_page()
+        profile.click_to_logout_btn()
+        assert profile.get_current_url() == URLs.LOGIN_PAGE_URL

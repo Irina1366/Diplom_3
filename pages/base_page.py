@@ -1,104 +1,115 @@
 import allure
+from data import URLs, DEFAULT_WAIT_TIME
+from selenium.common import TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from seletools.actions import drag_and_drop
+from selenium.webdriver.support import expected_conditions
 
 
 class BasePage:
+    timeout = DEFAULT_WAIT_TIME
+    url = URLs.BASE_URL
+
+    @staticmethod
+    def format_locators(locator_before_format, num):
+        method, locator = locator_before_format
+        locator = locator.format(num)
+        return method, locator
+
     def __init__(self, driver):
         self.driver = driver
 
-    @allure.step("Найти элемент")
-    def find_element(self, locator, timeout=10):
-       WebDriverWait(self.driver, timeout).until(EC.visibility_of_element_located(locator))
-       return self.driver.find_element(*locator)
+    @allure.step('Открытие веб-страницы.')
+    def open_page(self, url):
+        self.driver.get(url)
 
-    @allure.step("Ожидание появления элемента")
-    def wait_for_element_presence(self, locator, timeout=20):
-        return WebDriverWait(self.driver, timeout).until(EC.presence_of_element_located(locator))
-
-    @allure.step("Подождать видимости элемента")
-    def wait_for_element(self, locator, timeout=20):
-        return WebDriverWait(self.driver, timeout).until(EC.visibility_of_element_located(locator))
-
-    @allure.step("Подождать кликабельности элемента")
-    def wait_for_clickable_element(self, locator, timeout=10):
-        return WebDriverWait(self.driver, timeout).until(EC.element_to_be_clickable(locator))
-
-    @allure.step("Кликнуть на элемент")
-    def click_on_element(self, locator, timeout=20):
-        element = self.wait_for_clickable_element(locator, timeout)
-        element.click()
-
-    @allure.step("ВВести текст в поле ввода")
-    def send_keys_to_input(self, locator, keys, timeout=10):
-        element = self.wait_for_element(locator, timeout)
-        element.clear()
-        element.send_keys(keys)
-
-    @allure.step("Получить текст элемента")
-    def get_text_of_element(self, locator):
-        return self.driver.find_element(*locator).text
-
-    @allure.step("Ожидаем, пока текст элемента станет отличным от заданного")
-    def wait_for_text_to_change(self, locator, old_text, timeout=15):
-        WebDriverWait(self.driver, timeout).until(
-            lambda driver: self.get_text_of_element(locator) != old_text
-        )
-        return self.get_text_of_element(locator)
-
-    def check_text_on_page(self):
-        return self.driver.page_source
-
-    @allure.step("Получить текущий URL страницы")
+    @allure.step('Получение текущего адреса веб-страницы.')
     def get_current_url(self):
         return self.driver.current_url
 
-    @allure.step("Получить значение аттрибута элемента")
-    def get_attribute(self, locator, attribute):
-        element = self.driver.find_element(*locator)
-        return element.get_attribute(attribute)
+    @allure.step('Поиск элемента с ожиданием.')
+    def find_element_with_wait(self, locator):
+        return WebDriverWait(self.driver, self.timeout).until(
+            expected_conditions.visibility_of_element_located(locator))
 
-    @allure.step("Подождать пока элемент не станет невидимым")
-    def wait_for_element_hide(self, locator, timeout=15):
-        WebDriverWait(self.driver, timeout).until(EC.invisibility_of_element_located(locator))
-        return self.driver.find_element(*locator)
+    @allure.step('Определение доступности элемента.')
+    def element_is_available(self, locator):
+        try:
+            self.find_element_with_wait(locator)
+        except TimeoutException:
+            return False
+        return True
 
-    @allure.step('Drop ingredient into basket')
-    def drag_and_drop_element(self, source_locator, target_locator, timeout=10):
-        source = WebDriverWait(self.driver, timeout).until(EC.presence_of_element_located(source_locator))
-        target = WebDriverWait(self.driver, timeout).until(EC.presence_of_element_located(target_locator))
+    @allure.step('Клик по элементу с ожиданием.')
+    def click_to_element(self, locator):
+        self.find_element_with_wait(locator).click()
 
-        # JavaScript для имитации drag and drop. Обычный метод drag and drop в браузере Firefox не работает.
+    @allure.step('Клик по элементу с ожиданием (при помощи js-скрипта).')
+    def click_to_element_by_script(self, locator):
+        element = self.find_element_with_wait(locator)
+        self.driver.execute_script('arguments[0].click();', element)
+
+    @allure.step('Ожидание появления кликабельности элемента.')
+    def find_element_clickable(self, locator):
+        return WebDriverWait(self.driver, self.timeout).until(expected_conditions.element_to_be_clickable(locator))
+
+    @allure.step('Получение текста элемента.')
+    def get_text_from_element(self, locator):
+        return self.find_element_with_wait(locator).text
+
+    @allure.step('Запись текста в элемент.')
+    def send_text_to_element(self, locator, text):
+        element = self.find_element_with_wait(locator)
+        element.send_keys(text)
+
+    @allure.step('Скролл до элемента.')
+    def scroll_to_element(self, locator):
+        element = self.find_element_with_wait(locator)
+        self.driver.execute_script("arguments[0].scrollIntoView();", element)
+
+    @allure.step('Ожидаем выполнения перехода на веб страницу, 0 - на текущей вкладке; 1 - редирект на другой вкладке.')
+    def wait_for_redirect(self, expected_url, n=0):
+        WebDriverWait(self.driver, self.timeout).until(lambda driver: len(driver.window_handles) != n)
+        self.driver.switch_to.window(self.driver.window_handles[n])
+        WebDriverWait(self.driver, self.timeout).until(lambda driver: expected_url in self.driver.current_url)
+
+    @allure.step('Получение определённое кол-ва элементов с ожиданием.')
+    def find_all_elements_with_wait(self, locator, n):
+        WebDriverWait(self.driver, self.timeout).until(lambda driver: len(driver.find_elements(*locator)) == n)
+        return self.driver.find_elements(*locator)
+
+    @allure.step('Получение элементов без ожидания.')
+    def find_all_elements_without_wait(self, locator):
+        return self.driver.find_elements(*locator)
+
+    @allure.step('Ожидание появления определённого текста в элементе.')
+    def wait_before_text_change(self, locator, def_value):
+        WebDriverWait(self.driver, self.timeout).until(lambda driver: self.get_text_from_element(locator) != def_value)
+
+    @allure.step('Drag and drop для браузеров firefox / chrome.')
+    def drag_and_drop_element(self, locator_from, locator_to):
+        element_from = self.find_element_with_wait(locator_from)
+        element_to = self.find_element_with_wait(locator_to)
 
         self.driver.execute_script("""
-            function simulateDragAndDrop(sourceNode, destinationNode) {
-                var EVENT_TYPES = {
-                    DRAG_END:   'dragend',
-                    DRAG_START: 'dragstart',
-                    DROP:       'drop'
-                };
+               var source = arguments[0];
+               var target = arguments[1];
+               var evt = document.createEvent("DragEvent");
+               evt.initMouseEvent("dragstart", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+               source.dispatchEvent(evt);
+               evt = document.createEvent("DragEvent");
+               evt.initMouseEvent("dragenter", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+               target.dispatchEvent(evt);
 
-                function createEvent(type, properties) {
-                    var event = document.createEvent("HTMLEvents");
-                    event.initEvent(type, true, true);
-                    for (var property in properties) {
-                        event[property] = properties[property];
-                    }
-                    return event;
-                }
+               evt = document.createEvent("DragEvent");
+               evt.initMouseEvent("dragover", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+               target.dispatchEvent(evt);
+               evt = document.createEvent("DragEvent");
+               evt.initMouseEvent("drop", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+               target.dispatchEvent(evt);
+               evt = document.createEvent("DragEvent");
+               evt.initMouseEvent("dragend", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+               source.dispatchEvent(evt);
+            """, element_from, element_to)
 
-                var dragStartEvent = createEvent('dragstart', { clientX: 1, clientY: 1, dataTransfer: { effectAllowed: 'move', setData: function() {} }});
-                sourceNode.dispatchEvent(dragStartEvent);
 
-                var dropEvent = createEvent('drop', { clientX: 1, clientY: 1, dataTransfer: dragStartEvent.dataTransfer });
-                destinationNode.dispatchEvent(dropEvent);
 
-                var dragEndEvent = createEvent('dragend', { clientX: 1, clientY: 1, dataTransfer: dropEvent.dataTransfer });
-                sourceNode.dispatchEvent(dragEndEvent);
-            }
-
-            var source = arguments[0];
-            var target = arguments[1];
-            simulateDragAndDrop(source, target);
-            """, source, target)
